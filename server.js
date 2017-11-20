@@ -72,7 +72,41 @@ app.get('/book/:bookId/:chapter', (req, res) => {
       decodeEntities: false
     });
     const $chapter = $('#content');
-    res.send($chapter.html())
+    const $name = $('.bookname h1');
+    const name = $name.text();
+    res.send({
+      name,
+      html: $chapter.html()
+    })
+  })
+})
+
+app.get('/search/:name', (req, res) => {
+  let name = encodeURI(`${req.params.name}`);
+  request({
+    url: `http://zhannei.baidu.com/cse/search?q=${name}&s=17512219138159063592`,
+    encoding: null
+  }, (error, response, body) => {
+    const $ = cheerio.load(body);
+    const $resultList = $('#results .result-list');
+    const resultList = [];
+    $resultList.find($('.result-item')).each((index, result) => {
+      const url = $(result).children($('.result-game-item-pic')).children($('a')).children($('img')).attr('src');
+      const name = $(result).find($('.result-game-item-detail h3 a')).attr('title');
+      const href = $(result).find($('.result-game-item-detail h3 a')).attr('href');
+      const description = $(result).find($('.result-game-item-detail .result-game-item-desc')).text();
+      const author = $(result).find($('.result-game-item-detail .result-game-item-info p')).eq(0).find($('span')).eq(1).text();
+      const updateTime = $(result).find($('.result-game-item-detail .result-game-item-info p')).eq(2).find($('span')).eq(1).text();
+      resultList.push({
+        url,
+        name,
+        href: helper.getHref(href),
+        description,
+        author: author.trim(),
+        updateTime
+      })
+    })
+    res.json(resultList);
   })
 })
 
