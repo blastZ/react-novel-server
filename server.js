@@ -49,6 +49,21 @@ app.get('/book/:bookId', (req, res) => {
   }, (error, response, body) => {
     const html = iconv.decode(body, 'gbk');
     const $ = cheerio.load(html);
+    const url = $('#fmimg img').attr('src');
+    const $bookInfo = $('#info');
+    const name = $bookInfo.children($('h1')).text();
+    const author = $bookInfo.children($('p')).eq(0).find($('a')).text();
+    const updateTime = $bookInfo.children($('p')).eq(2).text();
+    const latestChapter = $bookInfo.children($('p')).eq(3).find($('a')).text();
+    const description = $('#intro').text();
+    const bookInfo = {
+      url,
+      name,
+      author,
+      updateTime: updateTime.trim(),
+      latestChapter,
+      description: description.trim()
+    }
     const chapterList = [];
     $('#list dd a').each((index, chapter) => {
       chapterList.push({
@@ -57,6 +72,7 @@ app.get('/book/:bookId', (req, res) => {
       })
     })
     res.json({
+      bookInfo,
       chapterList
     });
   })
@@ -96,14 +112,12 @@ app.get('/search/:name', (req, res) => {
       const href = $(result).find($('.result-game-item-detail h3 a')).attr('href');
       const description = $(result).find($('.result-game-item-detail .result-game-item-desc')).text();
       const author = $(result).find($('.result-game-item-detail .result-game-item-info p')).eq(0).find($('span')).eq(1).text();
-      const updateTime = $(result).find($('.result-game-item-detail .result-game-item-info p')).eq(2).find($('span')).eq(1).text();
       resultList.push({
         url,
         name,
         href: helper.getHref(href),
         description,
         author: author.trim(),
-        updateTime
       })
     })
     res.json(resultList);
